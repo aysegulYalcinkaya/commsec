@@ -8,6 +8,7 @@ import requests
 import csv
 from datetime import date
 import copy
+from selenium.webdriver.chrome.options import Options
 
 
 def connect():
@@ -39,6 +40,8 @@ def get_asx_codes():
 
 
 def get_data(asx_code):
+    # data is collected from table
+    # this will be updated to csv download
     data = []
     try:
         # Find the shadow input element
@@ -61,6 +64,8 @@ def get_data(asx_code):
         txt = table.find_element_by_tag_name('tbody').text
 
         if txt.lower().strip() != "no records found.":
+            driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", table)
+
             # Get all rows of the table
             rows = table.find_element_by_tag_name('tbody').find_elements_by_xpath('.//tr')
             # Initialize an empty list to store the data
@@ -95,8 +100,13 @@ today = date.today()
 # Format the date as "Day Month Year"
 date_str = today.strftime("%Y-%m-%d")
 
+# Set the options for the headless browser
+options = Options()
+options.headless = True
+
+# Create a new instance of the Chrome driver with the headless options
 # Set up the web driver and navigate to the login page
-driver = webdriver.Chrome("c:\\chromedriver.exe")
+driver = webdriver.Chrome("chromedriver.exe")
 
 driver.get("https://www2.commsec.com.au/secure/login")
 
@@ -115,7 +125,7 @@ password_field.send_keys(Keys.RETURN)
 element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'commsec-header')))
 
 exception_list = []
-con = connect()
+#con = connect()
 
 with open("asx_codes.csv", newline='') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
@@ -124,7 +134,8 @@ with open("asx_codes.csv", newline='') as csvfile:
         code = row[0]
         print("Getting " + code)
         course_of_sales = get_data(code)
-        insert_data(con, course_of_sales)
+        print(course_of_sales)
+        #insert_data(con, course_of_sales)
 
 # try the codes that got exception in previous step
 lst = copy.deepcopy(exception_list)
